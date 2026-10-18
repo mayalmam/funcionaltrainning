@@ -14,3 +14,10 @@ Semana 1: sesiones 1 y 5. Semana 2: 2 y 6. Semana 3: 3 y 7. Semana 4: 4 y 8. Dej
 Cada sesión: calentamiento 10 min, fuerza 24 min (3 vueltas, 4 estaciones de 2 min), circuito 16 min (4 vueltas, 4 estaciones, 40/20), cardio suave 5 min, vuelta a la calma 5 min.
 
 Los dibujos son esquemas de apoyo con instrucciones. Ajusta cargas y descansos a tu técnica y recuperación.
+
+## Favoritos, valoraciones y notas
+Cada sesión tiene marcador de favorito, me gusta y no me gusta, y notas con guardado automático. Con no me gusta se muestran sustituciones predefinidas por fuerza, cardio o variedad. Puedes revisar los cambios y aplicarlos, y recuperar la versión anterior. No hay inteligencia artificial ni análisis automático de las notas. La duración permanece en 60 minutos.
+
+Todos los datos personales se guardan solo en localStorage del navegador: no se suben al repositorio ni se sincronizan entre dispositivos o dominios. Al borrar los datos del navegador se perderán. Los avisos de error informan si no se puede guardar.
+
+Estética negra con detalles naranja y una frase de motivación en cada tarjeta.
