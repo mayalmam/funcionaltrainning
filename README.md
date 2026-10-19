@@ -20,6 +20,6 @@ Cada sesión tiene marcador de favorito, me gusta y no me gusta, y notas con gua
 
 Todos los datos personales se guardan solo en localStorage del navegador: no se suben al repositorio ni se sincronizan entre dispositivos o dominios. Al borrar los datos del navegador se perderán. Los avisos de error informan si no se puede guardar.
 
-Estética negra con detalles naranja y una frase de motivación en cada tarjeta.
+Identidad Mi entreno · Pista eléctrica: azul noche, lima y fotografía de material. Manual y propuestas conservadas en docs/diseno/.
 
 Incluye movimientos sencillos de CrossFit sin gimnásticos ni levantamientos olímpicos complejos. El thruster se hace con mancuernas ligeras y puede sustituirse por sentadilla goblet.
