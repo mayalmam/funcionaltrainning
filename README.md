@@ -23,3 +23,9 @@ Todos los datos personales se guardan solo en localStorage del navegador: no se 
 Identidad Mi entreno · Pista eléctrica: azul noche, lima y fotografía de material. Manual y propuestas conservadas en docs/diseno/.
 
 Incluye movimientos sencillos de CrossFit sin gimnásticos ni levantamientos olímpicos complejos. El thruster se hace con mancuernas ligeras y puede sustituirse por sentadilla goblet.
+
+## Material del centro y descarga del progreso
+
+Entrada «Explora tu gimnasio» con fotos de poleas, prensa y rack. En ejercicios asociados, pulsa «Ver máquina» para consultar la ficha sin salir del entrenamiento.
+
+Las cargas y notas siguen guardándose automáticamente. Para conservar una copia con fecha, pulsa «Guardar registro del día» al terminar de anotar: se conserva un registro por sesión y día, actualizable. Desde «Mi progreso» puedes filtrar un mes y descargar CSV compatible con Excel o abrir el informe para imprimirlo / guardarlo como PDF. También puedes exportar las últimas cargas anteriores, sin fecha. No se pueden reconstruir meses previos al registro fechado. Todo permanece en este navegador.

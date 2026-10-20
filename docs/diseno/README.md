@@ -34,3 +34,13 @@ Se conservan las claves `ritmo-completed` y `ritmo-feedback-v1` y los identifica
 - 02-pista-electrica.png: boceto aprobado de inicio, sesión y revisión.
 
 El boceto es una referencia de dirección artística, no una captura de la aplicación. Esta primera implementación adapta la identidad a las funciones y contenidos reales.
+
+## Prueba: material del centro y progreso
+
+Tarjeta de entrada a la derecha de la bienvenida en escritorio; debajo en móvil. Catálogo de poleas, prensa y rack con fotografías locales. Desde los ejercicios de poleas y prensa se abre la ficha del material en un diálogo adicional, sin cerrar la sesión ni reiniciar el temporizador. El rack aún no tiene ejercicios vinculados en el plan actual. La foto lateral de poleas se editó para eliminar las personas y los reflejos; las otras cuatro son originales.
+
+«Mi progreso» permite exportar las últimas cargas de todas las sesiones, sin atribuirles fechas inventadas. «Guardar registro del día» crea una copia fechada de cargas, notas y valoración de la sesión en `ritmo-training-log-v1`. Un registro por sesión y día; guardar de nuevo actualiza ese registro. No registra cada pulsación ni crea un historial retrospectivo. Las cargas originales siguen en su clave anterior. Los informes mensuales incluyen las copias fechadas, no estimaciones de progreso.
+
+Exportación CSV UTF-8 con BOM y separador punto y coma, compatible con Excel (no es un archivo XLSX). Se neutralizan fórmulas de celdas. PDF mediante ventana de informe con tabla de todas las sesiones seleccionadas y botón Imprimir / Guardar como PDF. La descarga no sincroniza datos entre dispositivos.
+
+Validación: sintaxis JS, pruebas de registros, sustitución de registro del mismo día, meses vacíos, preservación de datos previos, asociaciones de equipos y escape de exportación. Pendiente prueba visual en dispositivos reales.
