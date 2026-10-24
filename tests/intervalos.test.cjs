@@ -28,3 +28,16 @@ test('valida límites y conserva la configuración',()=>{
  assert.throws(()=>new IntervalTimer({work:0,rest:0,rounds:1}));
  const original={...c},t=new IntervalTimer(original);original.work=99;assert.equal(t.config.work,40);
 });
+test('triple pitido y final prolongado con tonos distintos',()=>{
+ const {soundPattern}=require('../intervalos.js');
+ const work=soundPattern('triple',false,'work'),rest=soundPattern('triple',false,'rest');
+ assert.equal(work.length,3);assert.equal(rest.length,3);
+ assert.deepEqual(work.map(p=>p.at),[0,0.3,0.6]);
+ assert.notEqual(work[0].frequency,rest[0].frequency);
+ assert.equal(soundPattern('marked',false).length,1);
+ for(const style of ['triple','marked']){
+  const pulses=soundPattern(style,false),final=soundPattern(style,true);
+  assert.equal(final.length,1);
+  assert.ok(final[0].duration>pulses[pulses.length-1].at+pulses[pulses.length-1].duration);
+ }
+});
