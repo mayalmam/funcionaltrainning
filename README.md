@@ -29,3 +29,11 @@ Incluye movimientos sencillos de CrossFit sin gimnásticos ni levantamientos ol�
 Entrada «Explora tu gimnasio» con fotos de poleas, prensa y rack. En ejercicios asociados, pulsa «Ver máquina» para consultar la ficha sin salir del entrenamiento.
 
 Las cargas y notas siguen guardándose automáticamente. Para conservar una copia con fecha, pulsa «Guardar registro del día» al terminar de anotar: se conserva un registro por sesión y día, actualizable. Desde «Mi progreso» puedes filtrar un mes y descargar CSV compatible con Excel o abrir el informe para imprimirlo / guardarlo como PDF. También puedes exportar las últimas cargas anteriores, sin fecha. No se pueden reconstruir meses previos al registro fechado. Todo permanece en este navegador.
+
+## Cronómetros
+
+El cronómetro de cada sesión permanece visible al desplazarse por su ficha: muestra el tiempo total, la fase y el intervalo restante, con pausa y reinicio.
+
+Debajo de los dos carruseles está «Temporizador libre». Permite configurar segundos de trabajo (1–3600), descanso (0–3600) y rondas (1–99). No añade descanso después de la última ronda. Se abre en vista ampliada; el botón de pantalla completa oculta las barras del navegador cuando este lo permite. Incluye sonido opcional, pausa, continuación y reinicio. Cerrar pausa el temporizador; las preferencias se conservan en este navegador, pero la cuenta en curso no sobrevive a una recarga. Para cambiar los tiempos de un entrenamiento iniciado, pulsa Reiniciar. La cuenta se calcula mediante tiempo transcurrido y se actualiza al volver a la pestaña; los avisos sonoros requieren que la app permanezca visible. Intenta mantener la pantalla activa en navegadores compatibles. No modifica cargas, notas ni registros de progreso.
+
+Pruebas del motor de intervalos: `node --test tests/intervalos.test.cjs`.

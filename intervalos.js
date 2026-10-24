@@ -1,0 +1,153 @@
+/* Temporizador independiente: calcula fases por tiempo transcurrido, no por ticks. */
+(function () {
+  'use strict';
+  const defaults = {work: 40, rest: 20, rounds: 8};
+  function validConfig(config) {
+    return config && Number.isInteger(config.work) && config.work >= 1 && config.work <= 3600 &&
+      Number.isInteger(config.rest) && config.rest >= 0 && config.rest <= 3600 &&
+      Number.isInteger(config.rounds) && config.rounds >= 1 && config.rounds <= 99;
+  }
+  function totalMilliseconds(config) {
+    return (config.work * config.rounds + config.rest * (config.rounds - 1)) * 1000;
+  }
+  function phaseAtTime(elapsed, config) {
+    const total = totalMilliseconds(config);
+    if (elapsed >= total) return {kind: 'done', round: config.rounds, left: 0, totalLeft: 0};
+    const cycle = (config.work + config.rest) * 1000;
+    const roundIndex = Math.floor(Math.max(0, elapsed) / cycle);
+    const position = Math.max(0, elapsed) - roundIndex * cycle;
+    const work = position < config.work * 1000;
+    return {kind: work ? 'work' : 'rest', round: roundIndex + 1,
+      left: Math.ceil(((work ? config.work * 1000 : cycle) - position) / 1000),
+      totalLeft: Math.ceil((total - Math.max(0, elapsed)) / 1000)};
+  }
+  class IntervalTimer {
+    constructor(config, now = () => Date.now()) {
+      if (!validConfig(config)) throw new Error('Configuración no válida');
+      this.config = {...config}; this.now = now; this.elapsed = 0; this.startedAt = null;
+    }
+    get running() { return this.startedAt !== null; }
+    elapsedNow() { return this.elapsed + (this.running ? Math.max(0, this.now() - this.startedAt) : 0); }
+    state() { return phaseAtTime(this.elapsedNow(), this.config); }
+    start() { if (!this.running && this.state().kind !== 'done') this.startedAt = this.now(); }
+    pause() { this.elapsed = Math.min(totalMilliseconds(this.config), this.elapsedNow()); this.startedAt = null; }
+    reset(config = this.config) {
+      if (!validConfig(config)) throw new Error('Configuración no válida');
+      this.config = {...config}; this.elapsed = 0; this.startedAt = null;
+    }
+  }
+  if (typeof module !== 'undefined' && module.exports) module.exports = {validConfig, phaseAtTime, totalMilliseconds, IntervalTimer};
+  if (typeof document === 'undefined') return;
+
+  const byId = id => document.getElementById(id);
+  const format = seconds => `${String(Math.floor(seconds / 60)).padStart(2, '0')}:${String(seconds % 60).padStart(2, '0')}`;
+  let config = {...defaults};
+  try { let saved = JSON.parse(localStorage.getItem('ritmo-interval-settings-v1')); if (validConfig(saved)) config = saved; } catch {}
+  const timer = new IntervalTimer(config);
+  let tick = null, lastPhase = '', soundContext = null, wakeLock = null, lockPending = false;
+  const card = document.createElement('section');
+  card.className = 'interval-entry';
+  card.setAttribute('aria-labelledby', 'interval-entry-title');
+  card.innerHTML = `<div><div class="eyebrow">A TU RITMO</div><h2 id="interval-entry-title">Temporizador libre</h2><p>Configura trabajo, descanso y rondas para entrenar fuera de las sesiones.</p><p class="interval-preset" id="interval-summary"></p></div><button class="primary" id="open-intervals">Configurar y abrir ↗</button>`;
+  const grid = byId('grid'); grid.after(card);
+  const dialog = document.createElement('dialog'); dialog.id = 'interval-dialog';
+  dialog.setAttribute('aria-labelledby', 'interval-title');
+  dialog.innerHTML = `<div class="interval-shell" id="interval-shell">
+    <header class="interval-header"><div><span class="eyebrow">MI ENTRENO ///</span><h2 id="interval-title">Temporizador libre</h2></div><div class="interval-header-actions"><button id="interval-fullscreen">Pantalla completa ⛶</button><button id="interval-close" aria-label="Cerrar y pausar temporizador">Cerrar ✕</button></div></header>
+    <form id="interval-settings" class="interval-settings">
+      <label>Trabajo <span>(segundos)</span><input id="interval-work" type="number" inputmode="numeric" min="1" max="3600" step="1" required value="${config.work}"></label>
+      <label>Descanso <span>(segundos)</span><input id="interval-rest" type="number" inputmode="numeric" min="0" max="3600" step="1" required value="${config.rest}"></label>
+      <label>Rondas<input id="interval-rounds" type="number" inputmode="numeric" min="1" max="99" step="1" required value="${config.rounds}"></label>
+      <p id="interval-plan" class="interval-plan"></p>
+    </form>
+    <section class="interval-display" data-phase="ready" aria-label="Cuenta atrás de intervalos">
+      <p id="interval-phase" class="interval-phase" role="status" aria-live="polite">Listo para empezar</p>
+      <div id="interval-time" class="interval-time" role="timer" aria-label="Tiempo del intervalo" aria-live="off">${format(config.work)}</div>
+      <p class="interval-round"><span id="interval-round">Ronda 1 de ${config.rounds}</span><span id="interval-total"></span></p>
+      <div class="interval-progress" aria-hidden="true"><div id="interval-progress-fill"></div></div>
+    </section>
+    <div class="interval-controls"><button class="primary" id="interval-start">Iniciar</button><button id="interval-reset">Reiniciar</button></div>
+    <footer class="interval-footer"><label><input id="interval-sound" type="checkbox" checked> Aviso sonoro al cambiar</label><p id="interval-message" role="status">Al cerrar se pausa. Puedes volver a abrirlo y continuar.</p><small>Mantén la app visible para recibir los avisos. No hay descanso después de la última ronda.</small></footer>
+  </div>`;
+  document.body.append(dialog);
+
+  function readConfig() { return {work: Number(byId('interval-work').value), rest: Number(byId('interval-rest').value), rounds: Number(byId('interval-rounds').value)}; }
+  function saveConfig(next) {
+    config = {...next};
+    try { localStorage.setItem('ritmo-interval-settings-v1', JSON.stringify(config)); } catch {}
+    byId('interval-summary').textContent = `${config.work} s trabajo / ${config.rest} s descanso · ${config.rounds} rondas`;
+  }
+  function releaseLock() { if (wakeLock) { wakeLock.release().catch(() => {}); wakeLock = null; } }
+  async function keepAwake() {
+    if (!navigator.wakeLock || wakeLock || lockPending || !timer.running || document.visibilityState !== 'visible') return;
+    lockPending = true;
+    try {
+      const lock = await navigator.wakeLock.request('screen');
+      if (!timer.running || !dialog.open) { await lock.release(); return; }
+      wakeLock = lock; lock.addEventListener('release', () => { if (wakeLock === lock) wakeLock = null; });
+    } catch {} finally { lockPending = false; }
+  }
+  function initSound() {
+    try { const Audio = window.AudioContext || window.webkitAudioContext; if (Audio) { soundContext ||= new Audio(); soundContext.resume().catch(() => {}); } } catch {}
+  }
+  function signal(done) {
+    if (!byId('interval-sound').checked || !soundContext || document.visibilityState !== 'visible') return;
+    try { const tone = soundContext.createOscillator(), gain = soundContext.createGain(); tone.connect(gain); gain.connect(soundContext.destination); tone.frequency.value = done ? 880 : 660; gain.gain.setValueAtTime(0.12, soundContext.currentTime); gain.gain.exponentialRampToValueAtTime(0.001, soundContext.currentTime + 0.35); tone.start(); tone.stop(soundContext.currentTime + 0.36); } catch {}
+  }
+  function paint() {
+    const state = timer.state(), key = `${state.kind}-${state.round}`;
+    if (lastPhase && lastPhase !== key && timer.running) signal(state.kind === 'done');
+    lastPhase = key;
+    const started = timer.elapsedNow() > 0 || timer.running;
+    const done = state.kind === 'done';
+    byId('interval-time').textContent = format(state.left);
+    byId('interval-total').textContent = `Total restante ${format(state.totalLeft)}`;
+    byId('interval-round').textContent = `Ronda ${state.round} de ${timer.config.rounds}`;
+    const label = done ? '¡Completado!' : !started ? 'Listo para empezar' : `${state.kind === 'work' ? 'Trabajo' : 'Descanso'}${timer.running ? '' : ' · En pausa'}`;
+    const phase = byId('interval-phase'); if (phase.textContent !== label) phase.textContent = label;
+    dialog.querySelector('.interval-display').dataset.phase = done ? 'done' : !started ? 'ready' : state.kind;
+    byId('interval-start').textContent = done ? 'Finalizado' : timer.running ? 'Pausar' : started ? 'Continuar' : 'Iniciar';
+    byId('interval-start').disabled = done;
+    const locked = started || done;
+    ['work', 'rest', 'rounds'].forEach(id => byId(`interval-${id}`).disabled = locked);
+    byId('interval-progress-fill').style.width = `${Math.min(100, timer.elapsedNow() / totalMilliseconds(timer.config) * 100)}%`;
+    byId('interval-plan').textContent = `${timer.config.rounds} rondas · ${format(Math.ceil(totalMilliseconds(timer.config) / 1000))} en total · Sin descanso final`;
+    if (done && timer.running) { timer.pause(); stopTicks(); releaseLock(); byId('interval-message').textContent = 'Has terminado todas las rondas. Pulsa Reiniciar para empezar de nuevo.'; }
+  }
+  function stopTicks() { clearInterval(tick); tick = null; }
+  function pause() { timer.pause(); stopTicks(); releaseLock(); paint(); if (timer.state().kind !== 'done') byId('interval-message').textContent = 'En pausa. Pulsa Continuar para retomar el tiempo restante.'; }
+  function reset() { stopTicks(); releaseLock(); timer.reset(); lastPhase = ''; byId('interval-message').textContent = 'Listo. Puedes cambiar los tiempos antes de iniciar.'; paint(); }
+  function applySettings() {
+    if (timer.running || timer.elapsedNow() > 0) return;
+    const next = readConfig();
+    if (!validConfig(next)) { byId('interval-plan').textContent = 'Trabajo: 1–3600 s · Descanso: 0–3600 s · Rondas: 1–99. Usa números enteros.'; return; }
+    saveConfig(next); timer.reset(next); lastPhase = ''; paint();
+  }
+  byId('interval-settings').addEventListener('input', applySettings);
+  byId('interval-settings').addEventListener('submit', event => { event.preventDefault(); byId('interval-start').click(); });
+  byId('open-intervals').addEventListener('click', () => { dialog.showModal(); paint(); });
+  byId('interval-start').addEventListener('click', () => {
+    if (timer.running) { pause(); return; }
+    if (!byId('interval-settings').reportValidity()) return;
+    if (!timer.elapsedNow()) { const next = readConfig(); if (!validConfig(next)) return; timer.reset(next); saveConfig(next); }
+    initSound(); timer.start(); keepAwake(); paint(); stopTicks(); tick = setInterval(paint, 100);
+    byId('interval-message').textContent = 'Entrenamiento en marcha. Puedes pausarlo cuando lo necesites.';
+  });
+  byId('interval-reset').addEventListener('click', reset);
+  async function leaveFullscreen() { if (document.fullscreenElement && dialog.contains(document.fullscreenElement)) { try { await document.exitFullscreen(); } catch {} } }
+  byId('interval-close').addEventListener('click', async () => { pause(); await leaveFullscreen(); dialog.close(); });
+  dialog.addEventListener('cancel', () => { pause(); leaveFullscreen(); });
+  dialog.addEventListener('close', () => { pause(); leaveFullscreen(); });
+  byId('interval-fullscreen').addEventListener('click', async () => {
+    if (document.fullscreenElement) { await leaveFullscreen(); return; }
+    const shell = byId('interval-shell');
+    if (shell.requestFullscreen) { try { await shell.requestFullscreen(); return; } catch {} }
+    byId('interval-message').textContent = 'La vista ya ocupa la pantalla disponible. Este navegador no permite ocultar sus barras.';
+  });
+  document.addEventListener('fullscreenchange', () => { byId('interval-fullscreen').textContent = document.fullscreenElement ? 'Salir de pantalla completa' : 'Pantalla completa ⛶'; });
+  document.addEventListener('visibilitychange', () => { if (timer.running) { paint(); keepAwake(); } });
+  // Evita dos temporizadores sonando a la vez al abrir una sesión.
+  const previousOpenSession = window.openSession;
+  window.openSession = function (...args) { if (timer.running) pause(); return previousOpenSession.apply(this, args); };
+  saveConfig(config); paint();
+})();
