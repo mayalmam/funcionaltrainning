@@ -28,11 +28,11 @@ Incluye movimientos sencillos de CrossFit sin gimnásticos ni levantamientos ol�
 
 Entrada «Explora tu gimnasio» con fotos de poleas, prensa y rack. En ejercicios asociados, pulsa «Ver máquina» para consultar la ficha sin salir del entrenamiento.
 
-Las cargas y notas siguen guardándose automáticamente. Para conservar una copia con fecha, pulsa «Guardar registro del día» al terminar de anotar: se conserva un registro por sesión y día, actualizable. Desde «Mi progreso» puedes filtrar un mes y descargar CSV compatible con Excel o abrir el informe para imprimirlo / guardarlo como PDF. También puedes exportar las últimas cargas anteriores, sin fecha. No se pueden reconstruir meses previos al registro fechado. Todo permanece en este navegador.
+Las cargas y notas siguen guardándose automáticamente. Para conservar una copia con fecha, pulsa «Finalizar y guardar» al terminar el entrenamiento: cada ejecución tiene un registro independiente. Desde «Mi progreso» puedes filtrar un mes y descargar CSV compatible con Excel o abrir el informe para imprimirlo / guardarlo como PDF. También puedes exportar las últimas cargas anteriores, sin fecha. No se pueden reconstruir meses previos al registro fechado. Todo permanece en este navegador.
 
 ## Cronómetros
 
-El cronómetro de cada sesión permanece visible al desplazarse por su ficha: muestra el tiempo total, la fase y el intervalo restante, con pausa y reinicio.
+El cronómetro de cada sesión permanece visible al desplazarse por su ficha: muestra el tiempo total, la fase y el intervalo restante, con pausa y reinicio. La nueva vista guiada conserva también la referencia del tiempo al desplazarse.
 
 Debajo de los dos carruseles está «Temporizador libre». Permite configurar segundos de trabajo (1–3600), descanso (0–3600) y rondas (1–99). No añade descanso después de la última ronda. Se abre en vista ampliada; el botón de pantalla completa oculta las barras del navegador cuando este lo permite. Incluye sonido opcional, pausa, continuación y reinicio. Cerrar pausa el temporizador; las preferencias se conservan en este navegador, pero la cuenta en curso no sobrevive a una recarga. Para cambiar los tiempos de un entrenamiento iniciado, pulsa Reiniciar. La cuenta se calcula mediante tiempo transcurrido y se actualiza al volver a la pestaña; los avisos sonoros requieren que la app permanezca visible. Intenta mantener la pantalla activa en navegadores compatibles. No modifica cargas, notas ni registros de progreso.
 
@@ -41,3 +41,13 @@ Pruebas del motor de intervalos: `node --test tests/intervalos.test.cjs`.
 ### Avisos del temporizador libre
 
 En «Sonido y volumen» puedes elegir triple pitido (opción inicial) o pitido marcado, ajustar el volumen y probar el sonido. El trabajo usa un tono más alto que el descanso; la finalización tiene un aviso más largo. Las preferencias se conservan en este navegador, sin cambiar notas ni cargas. El volumen multimedia del dispositivo sigue limitando el nivel audible. Las casillas de trabajo, descanso y rondas se alinean a la misma altura en móvil.
+
+## Recorrido de entrenamiento y revisión UX
+
+La selección distingue sesiones nuevas, en curso y completadas. «Entrenamiento guiado» muestra un paso cada vez, vuelta, siguiente ejercicio, tiempo, carga y controles de pausa/reanudación y avance. «Ficha completa» conserva la consulta de toda la sesión y su impresión.
+
+Cerrar, cambiar de pestaña o salir de la app pausa el entrenamiento y guarda el punto actual en este navegador. Se puede reabrir o recargar y pulsar Continuar/Reanudar. Al llegar a cero se abre la revisión, sin marcar completada hasta pulsar «Finalizar y guardar». Se permite finalizar antes de tiempo, indicando el tiempo activo real; avanzar pasos no se cuenta como tiempo entrenado. La duración programada permanece en 60 minutos: fuerza 60 s + 45 s descanso + 15 s cambio; circuito 40 s + 15 s descanso + 5 s cambio.
+
+Cada finalización conserva una copia fechada independiente, incluso si se repite la misma sesión en el mismo día. Se integra con las descargas mensuales existentes. Los antiguos registros manuales y las cargas/notas se conservan. «Historial de entrenamientos» permite recuperar esas copias; incluye estado vacío, errores y descarga de copia JSON para recuperación. La copia de seguridad se descarga, pero no hay importador ni sincronización entre dispositivos.
+
+Guion de pruebas y límites de validación: [REVISION-UX-ENTRENAMIENTO.md](REVISION-UX-ENTRENAMIENTO.md). Pruebas de regresión: `node --test tests/*.test.cjs`.
