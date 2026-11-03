@@ -1,5 +1,5 @@
 /* Modelo de entrenamiento y guardado; sin dependencias del navegador. */
-(function(root,factory){if(typeof module==='object'&&module.exports)module.exports=factory();else root.TrainingCore=factory();})(typeof globalThis!=='undefined'?globalThis:this,function(){
+(function(root,factory){if(typeof module==='object'&&module.exports)module.exports=factory(require('./flexible-core.js'));else root.TrainingCore=factory(root.FlexibleCore);})(typeof globalThis!=='undefined'?globalThis:this,function(F){
  'use strict';
  const DRAFT_KEY='ritmo-session-drafts-v1',LOG_KEY='ritmo-training-log-v1';
  const clone=value=>JSON.parse(JSON.stringify(value));
@@ -17,7 +17,7 @@
   return plan;
  }
  function locate(plan,remaining){const total=plan[plan.length-1].end,elapsed=Math.max(0,total-Math.max(0,remaining));let index=plan.findIndex(p=>p.end>elapsed);if(index<0)return {done:true,index:plan.length,step:plan[plan.length-1],left:0,next:null};const step=plan[index];const next=plan.slice(index+1).find(p=>p.kind==='work');return {done:false,index,step,left:Math.ceil(step.end-elapsed),next:next||null};}
- function validDraft(d){return !!d&&typeof d.runId==='string'&&Number.isInteger(d.sessionId)&&d.sessionId>=1&&d.sessionId<=8&&Number.isFinite(d.remaining)&&d.remaining>=0&&d.remaining<=3600&&['ready','in_progress','completed'].includes(d.status)&&d.snapshot&&Array.isArray(d.snapshot.strength)&&d.snapshot.strength.length===4&&Array.isArray(d.snapshot.circuit)&&d.snapshot.circuit.length===4&&d.snapshot.strength.concat(d.snapshot.circuit).every(x=>typeof x==='string')&&Number.isFinite(d.activeSeconds)&&d.activeSeconds>=0;}
+ function validDraft(d){return !!d&&typeof d.runId==='string'&&Number.isInteger(d.sessionId)&&d.sessionId>=1&&d.sessionId<=8&&Number.isFinite(d.remaining)&&d.remaining>=0&&d.remaining<=3600&&['ready','in_progress','completed'].includes(d.status)&&d.snapshot&&Array.isArray(d.snapshot.strength)&&d.snapshot.strength.length===4&&Array.isArray(d.snapshot.circuit)&&d.snapshot.circuit.length===4&&d.snapshot.strength.concat(d.snapshot.circuit).every(x=>typeof x==='string')&&Number.isFinite(d.activeSeconds)&&d.activeSeconds>=0&&(!d.mode||['guided','flexible'].includes(d.mode))&&(d.mode!=='flexible'||(F.valid(d.flex)&&d.flex.strength.every((x,i)=>x.name===d.snapshot.strength[i])&&d.flex.circuit.every((x,i)=>x.name===d.snapshot.circuit[i])));}
  class Repository{
   constructor(storage){this.storage=storage;}
   read(key,fallback){const raw=this.storage.getItem(key);if(!raw)return clone(fallback);const value=JSON.parse(raw);if(key===LOG_KEY&&(!Array.isArray(value)||!value.every(r=>r&&typeof r.date==='string'&&Array.isArray(r.rows))))throw Error('El historial no tiene un formato válido.');if(key===DRAFT_KEY&&(!value||typeof value!=='object'||Array.isArray(value)||!Object.values(value).every(validDraft)))throw Error('La sesión guardada no tiene un formato válido.');return value;}
